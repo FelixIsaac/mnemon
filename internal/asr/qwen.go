@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -46,7 +47,7 @@ type qwenTranscriptionResponse struct {
 	Text     string `json:"text"`
 	Language string `json:"language,omitempty"`
 	Model    string `json:"model,omitempty"`
-	Duration int    `json:"duration,omitempty"`
+	Duration float64 `json:"duration,omitempty"`
 	Seconds  int    `json:"seconds,omitempty"`
 	Error    *struct {
 		Message string `json:"message"`
@@ -116,8 +117,8 @@ func TranscribeQwen(ctx context.Context, input string, opts QwenOptions) (Transc
 		return Transcript{}, errors.New("qwen asr response did not contain transcript text")
 	}
 	seconds := decoded.Seconds
-	if seconds == 0 {
-		seconds = decoded.Duration
+	if seconds == 0 && decoded.Duration > 0 {
+		seconds = int(math.Ceil(decoded.Duration))
 	}
 	model := decoded.Model
 	if model == "" {

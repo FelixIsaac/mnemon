@@ -50,7 +50,7 @@ func TestTranscribeQwenLocalFile(t *testing.T) {
 			Text:     "hello mnemon",
 			Language: "en",
 			Model:    DefaultQwenModel,
-			Seconds:  3,
+			Duration: 2.4,
 		})
 	}))
 	defer server.Close()
