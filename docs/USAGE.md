@@ -157,6 +157,42 @@ mnemon log              # operation log (default: last 20)
 mnemon log --limit 50   # show more entries
 ```
 
+### Audio Transcription
+
+Transcribe a local audio file or public audio URL with a locally hosted Qwen ASR server. This keeps the privacy/offline posture of local Whisper workflows while making Qwen available as an alternative ASR backend.
+
+Start a local Qwen ASR server:
+
+```bash
+docker run -p 17003:8000 quantatrisk/qwen3-asr:cpu-latest
+```
+
+Then transcribe:
+
+```bash
+mnemon transcribe ./voice-note.mp3
+mnemon transcribe https://example.com/audio.wav --language English
+mnemon transcribe ./meeting.mp3 --json --system-prompt "Names: Mnemon, OpenClaw"
+```
+
+NanoClaw/container deployment can run Qwen ASR as a sidecar service and point Mnemon at it:
+
+```bash
+mnemon transcribe ./voice-note.mp3 --endpoint http://qwen-asr:8000/v1/audio/transcriptions
+```
+
+Defaults:
+
+| Flag | Default | Description |
+|---|---|---|
+| `--provider` | `qwen` | ASR provider |
+| `--endpoint` | `http://localhost:17003/v1/audio/transcriptions` | Local Qwen ASR OpenAI-compatible transcription endpoint |
+| `--model` | `qwen3-asr-0.6b` | Qwen ASR model |
+| `--api-key` | *(empty)* | Optional bearer token for a protected local endpoint |
+| `--language` | *(auto)* | Optional language hint, such as `English` or `Chinese` |
+| `--system-prompt` | *(empty)* | Context text to bias recognition with names/domain terms |
+| `--json` | `false` | Include metadata such as detected language, model, and seconds |
+
 ### Visualization
 
 Export the knowledge graph for visual exploration:
