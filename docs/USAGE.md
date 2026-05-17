@@ -159,7 +159,7 @@ mnemon log --limit 50   # show more entries
 
 ### Audio Transcription
 
-Transcribe a local audio file or public audio URL with a locally hosted Qwen ASR server. This keeps the privacy/offline posture of local Whisper workflows while making Qwen available as an alternative ASR backend.
+Transcribe a local audio file or public audio URL with a locally hosted Qwen ASR server. Upstream Mnemon operates on text memories; this command adds an optional local audio-to-text ingestion step without introducing a hosted transcription dependency.
 
 Start a local Qwen ASR server:
 
