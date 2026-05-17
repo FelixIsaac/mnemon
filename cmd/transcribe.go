@@ -12,14 +12,16 @@ import (
 )
 
 var transcribeOpts struct {
-	provider     string
-	endpoint     string
-	model        string
-	apiKey       string
-	language     string
-	systemPrompt string
-	jsonOutput   bool
-	timeout      time.Duration
+	provider           string
+	endpoint           string
+	model              string
+	apiKey             string
+	language           string
+	systemPrompt       string
+	responseFormat     string
+	speakerDiarization bool
+	jsonOutput         bool
+	timeout            time.Duration
 }
 
 var transcribeCmd = &cobra.Command{
@@ -49,11 +51,13 @@ Then run:
 		}
 
 		result, err := asr.TranscribeQwen(ctx, args[0], asr.QwenOptions{
-			Endpoint:     transcribeOpts.endpoint,
-			APIKey:       transcribeOpts.apiKey,
-			Model:        transcribeOpts.model,
-			Language:     transcribeOpts.language,
-			SystemPrompt: transcribeOpts.systemPrompt,
+			Endpoint:                 transcribeOpts.endpoint,
+			APIKey:                   transcribeOpts.apiKey,
+			Model:                    transcribeOpts.model,
+			Language:                 transcribeOpts.language,
+			SystemPrompt:             transcribeOpts.systemPrompt,
+			ResponseFormat:           transcribeOpts.responseFormat,
+			EnableSpeakerDiarization: transcribeOpts.speakerDiarization,
 		})
 		if err != nil {
 			return err
@@ -77,6 +81,8 @@ func init() {
 	transcribeCmd.Flags().StringVar(&transcribeOpts.apiKey, "api-key", "", "optional bearer token for a protected local endpoint")
 	transcribeCmd.Flags().StringVar(&transcribeOpts.language, "language", "", "optional source language hint, for example English or Chinese")
 	transcribeCmd.Flags().StringVar(&transcribeOpts.systemPrompt, "system-prompt", "", "optional context text to bias recognition")
+	transcribeCmd.Flags().StringVar(&transcribeOpts.responseFormat, "response-format", asr.DefaultQwenResponseFormat, "Qwen response format: json, text, verbose_json, srt, or vtt")
+	transcribeCmd.Flags().BoolVar(&transcribeOpts.speakerDiarization, "speaker-diarization", false, "enable speaker diarization; slower on CPU Qwen servers")
 	transcribeCmd.Flags().BoolVar(&transcribeOpts.jsonOutput, "json", false, "print full transcript metadata as JSON")
 	transcribeCmd.Flags().DurationVar(&transcribeOpts.timeout, "timeout", 5*time.Minute, "request timeout")
 }

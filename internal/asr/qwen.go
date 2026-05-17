@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -21,18 +22,21 @@ const (
 	// DefaultQwenEndpoint targets a locally running Qwen3-ASR server that exposes
 	// the OpenAI-compatible audio transcriptions endpoint.
 	// Example: docker run -p 17003:8000 quantatrisk/qwen3-asr:cpu-latest
-	DefaultQwenEndpoint = "http://localhost:17003/v1/audio/transcriptions"
-	DefaultQwenModel    = "qwen3-asr-0.6b"
+	DefaultQwenEndpoint       = "http://localhost:17003/v1/audio/transcriptions"
+	DefaultQwenModel          = "qwen3-asr-0.6b"
+	DefaultQwenResponseFormat = "json"
 )
 
 // QwenOptions configures a local Qwen ASR transcription request.
 type QwenOptions struct {
-	Endpoint     string
-	APIKey       string
-	Model        string
-	Language     string
-	SystemPrompt string
-	HTTPClient   *http.Client
+	Endpoint                 string
+	APIKey                   string
+	Model                    string
+	Language                 string
+	SystemPrompt             string
+	ResponseFormat           string
+	EnableSpeakerDiarization bool
+	HTTPClient               *http.Client
 }
 
 // Transcript is the normalized result returned by an ASR provider.
@@ -44,11 +48,11 @@ type Transcript struct {
 }
 
 type qwenTranscriptionResponse struct {
-	Text     string `json:"text"`
-	Language string `json:"language,omitempty"`
-	Model    string `json:"model,omitempty"`
+	Text     string  `json:"text"`
+	Language string  `json:"language,omitempty"`
+	Model    string  `json:"model,omitempty"`
 	Duration float64 `json:"duration,omitempty"`
-	Seconds  int    `json:"seconds,omitempty"`
+	Seconds  int     `json:"seconds,omitempty"`
 	Error    *struct {
 		Message string `json:"message"`
 		Code    string `json:"code"`
@@ -66,6 +70,9 @@ func TranscribeQwen(ctx context.Context, input string, opts QwenOptions) (Transc
 	}
 	if opts.Model == "" {
 		opts.Model = DefaultQwenModel
+	}
+	if opts.ResponseFormat == "" {
+		opts.ResponseFormat = DefaultQwenResponseFormat
 	}
 	client := opts.HTTPClient
 	if client == nil {
@@ -139,7 +146,14 @@ func buildTranscriptionRequest(input string, opts QwenOptions) (io.Reader, strin
 	if err := writer.WriteField("model", opts.Model); err != nil {
 		return nil, "", err
 	}
-	if err := writer.WriteField("response_format", "verbose_json"); err != nil {
+	responseFormat := strings.TrimSpace(opts.ResponseFormat)
+	if responseFormat == "" {
+		responseFormat = DefaultQwenResponseFormat
+	}
+	if err := writer.WriteField("response_format", responseFormat); err != nil {
+		return nil, "", err
+	}
+	if err := writer.WriteField("enable_speaker_diarization", strconv.FormatBool(opts.EnableSpeakerDiarization)); err != nil {
 		return nil, "", err
 	}
 	if strings.TrimSpace(opts.Language) != "" {

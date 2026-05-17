@@ -30,6 +30,12 @@ func TestTranscribeQwenLocalFile(t *testing.T) {
 		if got := r.FormValue("model"); got != DefaultQwenModel {
 			t.Fatalf("model = %q", got)
 		}
+		if got := r.FormValue("response_format"); got != DefaultQwenResponseFormat {
+			t.Fatalf("response_format = %q", got)
+		}
+		if got := r.FormValue("enable_speaker_diarization"); got != "false" {
+			t.Fatalf("enable_speaker_diarization = %q", got)
+		}
 		if got := r.FormValue("language"); got != "en" {
 			t.Fatalf("language = %q", got)
 		}
@@ -111,7 +117,39 @@ func TestBuildTranscriptionRequest(t *testing.T) {
 	if got := form.Value["model"][0]; got != "qwen3-asr-0.6b" {
 		t.Fatalf("model = %q", got)
 	}
+	if got := form.Value["response_format"][0]; got != DefaultQwenResponseFormat {
+		t.Fatalf("response_format = %q", got)
+	}
+	if got := form.Value["enable_speaker_diarization"][0]; got != "false" {
+		t.Fatalf("enable_speaker_diarization = %q", got)
+	}
 	if len(form.File["file"]) != 1 {
 		t.Fatalf("file count = %d", len(form.File["file"]))
+	}
+}
+
+func TestBuildTranscriptionRequestAllowsVerboseDiarization(t *testing.T) {
+	path := t.TempDir() + "/sample.wav"
+	if err := os.WriteFile(path, []byte("abc"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	body, contentType, err := buildTranscriptionRequest(path, QwenOptions{
+		Model:                    "qwen3-asr-0.6b",
+		ResponseFormat:           "verbose_json",
+		EnableSpeakerDiarization: true,
+	})
+	if err != nil {
+		t.Fatalf("buildTranscriptionRequest error: %v", err)
+	}
+	reader := multipart.NewReader(body, strings.TrimPrefix(contentType, "multipart/form-data; boundary="))
+	form, err := reader.ReadForm(1 << 20)
+	if err != nil {
+		t.Fatalf("ReadForm: %v", err)
+	}
+	if got := form.Value["response_format"][0]; got != "verbose_json" {
+		t.Fatalf("response_format = %q", got)
+	}
+	if got := form.Value["enable_speaker_diarization"][0]; got != "true" {
+		t.Fatalf("enable_speaker_diarization = %q", got)
 	}
 }

@@ -173,6 +173,7 @@ Then transcribe:
 mnemon transcribe ./voice-note.mp3
 mnemon transcribe https://example.com/audio.wav --language English
 mnemon transcribe ./meeting.mp3 --json --system-prompt "Names: Mnemon, OpenClaw"
+mnemon transcribe ./meeting.mp3 --response-format verbose_json --speaker-diarization
 ```
 
 NanoClaw/container deployment can run Qwen ASR as a sidecar service and point Mnemon at it:
@@ -191,7 +192,12 @@ Defaults:
 | `--api-key` | *(empty)* | Optional bearer token for a protected local endpoint |
 | `--language` | *(auto)* | Optional language hint, such as `English` or `Chinese` |
 | `--system-prompt` | *(empty)* | Context text to bias recognition with names/domain terms |
+| `--response-format` | `json` | Qwen response format sent to the server. Use `verbose_json` only when segment metadata is needed |
+| `--speaker-diarization` | `false` | Enable speaker diarization. This is slower on CPU Qwen servers |
 | `--json` | `false` | Include metadata such as detected language, model, and seconds |
+| `--timeout` | `5m` | Request timeout. CPU Qwen servers can run much slower than realtime |
+
+Mnemon defaults to the lightweight Qwen request path: `response_format=json` and `enable_speaker_diarization=false`. This avoids forcing segment/speaker metadata for ordinary transcript extraction, which is especially important on CPU-only Qwen deployments.
 
 ### Visualization
 
